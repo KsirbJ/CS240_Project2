@@ -9,9 +9,9 @@ using namespace std;
  *	Right value is bigger than left, values in the left subtree are smaller, values in middle subtree
  *	are between the two values, and values on the right are greater.
  *	Ex:
- *				[5|7]
- *			   /  |  \
- *		  [2|4] [6| ] [8|10]
+ *              [5|7]
+ *             /  |  \
+ *        [2|4] [6| ] [8|10]
  */
 template <typename T>
 class TTST{
@@ -28,6 +28,7 @@ private:
 		tNode *right, *middle, *left;
 		T leftVal;
 		T rightVal;
+		bool valFilled;
 	};
 	tNode *root;
 	void displayHelper(tNode *n) const;

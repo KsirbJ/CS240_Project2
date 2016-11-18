@@ -1,7 +1,4 @@
 
-#include <climits>
-// PROGRAM USES INT_MIN TO MARK AN INVALID INTEGER SPOT
-
 // default constructor
 template <typename T>
 TTST<T>::TTST(){
@@ -13,7 +10,7 @@ template <typename T>
 TTST<T>::TTST(T val){
 	root = new tNode;
 	root->leftVal = val;
-	root->rightVal = INT_MIN;
+	root->valFilled = false;
 	root->right = root->middle = root->left = nullptr;
 }
 
@@ -30,10 +27,9 @@ void TTST<T>::displayHelper(tNode *n) const{
 		return;
 	}
 	displayHelper(n->left);
-	if(n->leftVal != INT_MIN)
-		cout << n->leftVal << " " ;
+	cout << n->leftVal << " " ;
 	displayHelper(n->middle);
-	if(n->rightVal != INT_MIN)
+	if(n->valFilled)
 		cout << n->rightVal << " ";
 	displayHelper(n->right);
 } 
@@ -56,11 +52,11 @@ bool TTST<T>::insertHelper(tNode *&n, const T &val){
 	if(n == nullptr){
 		n = new tNode;
 		n->leftVal = val;
-		n->rightVal = INT_MIN;
 		n->right = n->middle = n->left = nullptr;
+		n->valFilled = false;
 		return true;
 	// If both values of this node are filled in
-	}else if((n->leftVal != INT_MIN) && (n->rightVal != INT_MIN)){ 
+	}else if(n->valFilled){ 
 		// Figure out where to add the new node
 		if(val > n->leftVal && val > n->rightVal){
 			return insertHelper(n->right, val);
@@ -70,12 +66,17 @@ bool TTST<T>::insertHelper(tNode *&n, const T &val){
 			return insertHelper(n->left, val);
 		}
 	// Only left value is filled in
-	}else if((n->leftVal != INT_MIN) && (n->rightVal == INT_MIN)){ 
+	}else if(!n->valFilled){ 
 		if(val > n->leftVal){
 			n->rightVal = val;
+			n->valFilled = true;
 			return true;
-		} else if(val < n->leftVal) 
-			return insertHelper(n->left, val);
+		}else if(val < n->leftVal){
+			n->rightVal = n->leftVal;
+			n->leftVal = val;
+			n->valFilled = true;
+			return true;
+		}
 	}
 	return false;
 }
