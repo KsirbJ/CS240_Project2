@@ -87,15 +87,26 @@ template <typename T>
 bool TTST<T>::find(const T &val) const{
 	tNode *ptr = root;
 	while(ptr != nullptr){
-		if(ptr->rightVal == val || ptr->leftVal == val){
-			return true;
-		}else if(val < ptr->leftVal && val < ptr->rightVal){
-			ptr = ptr->left;
-		}else if(val > ptr->leftVal && val < ptr->rightVal){
-			ptr = ptr->middle;
-		}else if(val > ptr->leftVal && val > ptr->rightVal){
-			ptr = ptr->right;
+		if(ptr->valFilled){
+			if(ptr->rightVal == val || ptr->leftVal == val){
+				return true;
+			}else if(val < ptr->leftVal && val < ptr->rightVal){
+				ptr = ptr->left;
+			}else if(val > ptr->leftVal && val < ptr->rightVal){
+				ptr = ptr->middle;
+			}else if(val > ptr->leftVal && val > ptr->rightVal){
+				ptr = ptr->right;
+			}
+		}else{
+			// If the node is not filled in, then it cannot have any children.
+			// So if we don't find the value at this level, we can stop
+			if(ptr->leftVal == val){
+				return true;
+			}else{
+				return false;
+			}
 		}
+
 	}
 	return false;
 }
