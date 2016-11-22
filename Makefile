@@ -10,4 +10,4 @@ driver.o:	driver.cpp TTST.h TTST.cpp
 	g++ $(FLAGS) -c driver.cpp -o driver.o
 
 clean:
-	rm -f *.o lab6
+	rm -f *.o p2
