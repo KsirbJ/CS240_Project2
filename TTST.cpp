@@ -108,83 +108,203 @@ bool TTST<T>::remove(const T &val){
 
 /**
  *	Remove a node from the tree.
- *	--------------- NOT YET IMPLEMENTED FOR 3-WAY TREE ------------------
+ *	Check the many cases, and replace values / remove nodes accordingly
  * 
  */
 template <typename T>
 bool TTST<T>::removeHelper(tNode *prev, tNode *cur, const T &val){
 	if(cur == nullptr) return false;
-	int RL = 0; // 1 => node is parent's right child, 0 => node is parent's left child.
-	// find the node
-	while(cur != nullptr && cur->val != val){
-		if(val > cur->val){
-			prev = cur;
-			cur = cur->right;
-			RL = 1;
-		} else if(val < cur->val){
-			prev = cur;
-			cur = cur->left;
-			RL = 0;
+	// edge case - deleting the root with only one value
+	if(cur == root && (cur->rightVal == val || cur->leftVal == val)){
+		if(!cur->valFilled){
+			delete root;
+			root = nullptr;
+			return true;
 		}
 	}
-	if(cur != nullptr && cur->val == val){
-		// edge case, deleting the root with no, or one child
-		if(cur == root){
-			if(cur->right == nullptr && cur->left == nullptr){
-				delete root;
-				root = nullptr;
-				return true;
-			}else if(cur->right != nullptr && cur->left == nullptr){
-				tNode *tmp = cur->right;
-				delete root;
-				root = tmp;
-				return true;
-			}else if(cur->right == nullptr && cur->left != nullptr){
-				tNode *tmp = cur->left;
-				delete root;
-				root = tmp;
-				return true;
-			}
+	int RML = 0; // 2 => node is parent's right child, 1 => node is parent's middle child, 0 => left child
+	// find the node
+	while(cur != nullptr && (cur->leftVal != val && cur->rightVal != val)){
+		if(val > cur->rightVal){
+			prev = cur;
+			cur = cur->right;
+			RML = 2;
+		} else if(val < cur->leftVal){
+			prev = cur;
+			cur = cur->left;
+			RML = 0;
+		}else if(val > cur->leftVal){
+			prev = cur;
+			cur = cur->middle;
+			RML = 1;
 		}
-		// case 1 - no children
-		if(cur->right == nullptr && cur->left == nullptr){
-			if(RL) prev->right = nullptr; 
+	}
+	if(cur != nullptr && (cur->leftVal == val || cur->rightVal == val)){
+		// Case 0 - no children, and only one value
+		if(cur->leftVal == val && !cur->valFilled){ 
+			if(RML == 2) prev->right = nullptr;
+			else if(RML == 1) prev->middle = nullptr;
 			else prev->left = nullptr;
 			delete cur;
-		// case 2 - one child
-		}else if(cur->right == nullptr){ // only left child
-			if(RL) prev->right = cur->left;
-			else prev->left = cur->left;
-			delete cur;
-		}else if(cur->left == nullptr){ // only right child
-			if(RL) prev->right = cur->right;
-			else prev->left = cur->right;
-			delete cur;
-		// case 3 - 2 children
+		}else if(cur->valFilled){ // both values in the node are filled in
+			// Case 1, no children
+			if(cur->left == nullptr && cur->middle == nullptr && cur->right == nullptr){
+				if(cur->leftVal == val) cur->leftVal = cur->rightVal;
+				cur->valFilled = false;
+			// case 2 - 1 child
+			}else if(cur->left == nullptr && cur->middle == nullptr){ // only right child
+				T tmpVal = cur->right->leftVal;
+				if(cur->right->valFilled){
+					removeHelper(cur, cur->right, cur->right->leftVal);
+				}else{
+					delete cur->right;
+					cur->right = nullptr;
+				}
+				
+				if(cur->leftVal == val){
+					cur->leftVal = cur->rightVal;
+				}
+				cur->rightVal = tmpVal;
+				return true;
+			}else if(cur->left == nullptr && cur->right == nullptr){ // only middle child
+				T tmpVal;
+				if(cur->middle->valFilled){
+					tmpVal = cur->middle->rightVal;
+					removeHelper(cur, cur->middle, cur->middle->rightVal);
+				}else{
+					tmpVal = cur->middle->leftVal;
+					delete cur->middle;
+					cur->middle = nullptr;
+				}
+				// replace the value
+				if(cur->rightVal == val) cur->rightVal = tmpVal;
+				else cur->leftVal = tmpVal;
+				return true;
+			}else if(cur->middle == nullptr && cur->right == nullptr){ // only left child
+				T tmpVal;
+				if(cur->left->valFilled){
+					tmpVal = cur->left->rightVal;
+					removeHelper(cur, cur->left, cur->left->rightVal);
+				}else{
+					tmpVal = cur->left->leftVal;
+					delete cur->left;
+					cur->left = nullptr;
+				}
+				if(cur->rightVal == val){
+					cur->rightVal = cur->leftVal;
+				}
+				cur->leftVal = tmpVal;
+				return true;
+			// case 3, 2 children
+			}else if(cur->left == nullptr){ // has right and middle child
+				if(cur->leftVal == val){
+					T tmpVal;
+					if(cur->middle->valFilled){
+						tmpVal = cur->middle->rightVal;
+						removeHelper(cur, cur->middle, cur->middle->rightVal);
+					}else{
+						tmpVal = cur->middle->leftVal;
+						delete cur->middle;
+						cur->middle = nullptr;
+					}
+					// replace the value
+					if(cur->rightVal == val) cur->rightVal = tmpVal;
+					else cur->leftVal = tmpVal;
+					return true;
+				}else if(cur->rightVal == val){
+					T tmpVal = cur->right->leftVal;
+					if(cur->right->valFilled){
+						removeHelper(cur, cur->right, cur->right->leftVal);
+					}else{
+						delete cur->right;
+						cur->right = nullptr;
+					}
+					
+					if(cur->leftVal == val){
+						cur->leftVal = cur->rightVal;
+					}
+					cur->rightVal = tmpVal;
+					return true;
+				}
+			}else if(cur->middle == nullptr){ // right and left children only
+				if(cur->leftVal == val){
+					T tmpVal;
+					if(cur->left->valFilled){
+						tmpVal = cur->left->rightVal;
+						removeHelper(cur, cur->left, cur->left->rightVal);
+					}else{
+						tmpVal = cur->left->leftVal;
+						delete cur->left;
+						cur->left = nullptr;
+					}
+					if(cur->rightVal == val){
+						cur->rightVal = cur->leftVal;
+					}
+					cur->leftVal = tmpVal;
+					return true;
+				}else if(cur->rightVal == val){
+					T tmpVal = cur->right->leftVal;
+					if(cur->right->valFilled){
+						removeHelper(cur, cur->right, cur->right->leftVal);
+					}else{
+						delete cur->right;
+						cur->right = nullptr;
+					}
+					
+					if(cur->leftVal == val){
+						cur->leftVal = cur->rightVal;
+					}
+					cur->rightVal = tmpVal;
+					return true;
+				}
+			}else if(cur->right == nullptr ){ // has left and middle children
+				T tmpVal;
+				if(cur->middle->valFilled){
+					tmpVal = cur->middle->rightVal;
+					removeHelper(cur, cur->middle, cur->middle->rightVal);
+				}else{
+					tmpVal = cur->middle->leftVal;
+					delete cur->middle;
+					cur->middle = nullptr;
+				}
+				// replace the value
+				if(cur->rightVal == val) cur->rightVal = tmpVal;
+				else cur->leftVal = tmpVal;
+				return true;
+			}
+		// case 4, has all 3 children - follow same rules as case 2
 		}else{
-			tNode *tmp = cur;
-			tNode *tmpParent = cur;
-			cur = cur->right;
-			// find smallest successor 
-			while(cur->left != nullptr) {
-				tmpParent = cur;
-				cur = cur->left;
+			if(cur->leftVal == val){
+				T tmpVal;
+				if(cur->middle->valFilled){
+					tmpVal = cur->middle->rightVal;
+					removeHelper(cur, cur->middle, cur->middle->rightVal);
+				}else{
+					tmpVal = cur->middle->leftVal;
+					delete cur->middle;
+					cur->middle = nullptr;
+				}
+				// replace the value
+				if(cur->rightVal == val) cur->rightVal = tmpVal;
+				else cur->leftVal = tmpVal;
+				return true;
+			}else if(cur->rightVal == val){
+				T tmpVal = cur->right->leftVal;
+				if(cur->right->valFilled){
+					removeHelper(cur, cur->right, cur->right->leftVal);
+				}else{
+					delete cur->right;
+					cur->right = nullptr;
+				}
+				
+				if(cur->leftVal == val){
+					cur->leftVal = cur->rightVal;
+				}
+				cur->rightVal = tmpVal;
+				return true;
 			}
-			T tmpVal = cur->val; // store value of successor
-			// delete the successor, and handle parent's right/left pointer
-			if(cur->right != nullptr){
-				if(tmpParent->right != nullptr && tmpParent->right == cur)
-					tmpParent->right = cur->right;
-				else tmpParent->left = cur->right;
-			}else{
-				if(tmpParent->right != nullptr && tmpParent->right == cur)
-					tmpParent->right = nullptr;
-				else tmpParent->left = nullptr;
-			}
-			delete cur;
-			tmp->val = tmpVal; // replace value that we want to delete with successor
 		}
-		return true;
+		
 	}
 	return false;
 }
